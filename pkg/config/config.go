@@ -8,6 +8,7 @@ import (
 type Config struct {
 	RunAddress  string
 	DatabaseURI string
+	SecretKey   string
 }
 
 func LoadConfig() *Config {
@@ -23,6 +24,10 @@ func LoadConfig() *Config {
 
 	if db := os.Getenv("DATABASE_URI"); db != "" {
 		cfg.DatabaseURI = db
+	}
+
+	if secret := os.Getenv("SECRET_KEY"); secret != "" {
+		cfg.SecretKey = secret
 	}
 
 	return cfg
