@@ -6,6 +6,7 @@ import (
 	"gophermart/pkg/config"
 	"gophermart/pkg/database"
 	"gophermart/pkg/gzip"
+	"gophermart/pkg/logger"
 	"log"
 	"net/http"
 )
@@ -13,6 +14,7 @@ import (
 func main() {
 	r := chi.NewRouter()
 	cfg := config.LoadConfig()
+	logger.InitLogger()
 	db, err := database.ConnectDB()
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
@@ -30,6 +32,9 @@ func main() {
 	})
 
 	if err := http.ListenAndServe(cfg.RunAddress, r); err != nil {
-		log.Fatal(err)
+		logger.Sugar.Fatal(err)
+	} else {
+		logger.Sugar.Infow(
+			"server started", "address", cfg.RunAddress)
 	}
 }

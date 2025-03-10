@@ -8,6 +8,7 @@ import (
 	"gophermart/pkg/database"
 	"gophermart/pkg/hash"
 	"gophermart/pkg/jwt"
+	"gophermart/pkg/logger"
 	"net/http"
 )
 
@@ -48,6 +49,8 @@ func LoginHandler(db *sqlx.DB, cfg *config.Config) http.HandlerFunc {
 		}
 
 		user2.SetJWT(w, token)
+
+		logger.Sugar.Infow("user logged in", "user_id", user.ID)
 
 		w.WriteHeader(http.StatusOK)
 	}
