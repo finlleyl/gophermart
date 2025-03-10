@@ -5,6 +5,7 @@ import (
 	"gophermart/internal/api"
 	"gophermart/pkg/config"
 	"gophermart/pkg/database"
+	"gophermart/pkg/gzip"
 	"log"
 	"net/http"
 )
@@ -19,7 +20,9 @@ func main() {
 	defer db.Close()
 
 	r.Route("/api/user", func(r chi.Router) {
-		r.Post("/register", api.RegisterHandler(db, cfg))
+		r.Post("/register", gzip.GzipMiddleware(
+			api.RegisterHandler(db, cfg)),
+		)
 	})
 
 	if err := http.ListenAndServe(cfg.RunAddress, r); err != nil {
