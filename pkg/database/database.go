@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"os"
 )
@@ -40,7 +41,7 @@ func loadDBConfig() *DBConfig {
 func ConnectDB() (*sqlx.DB, error) {
 	cfg := loadDBConfig()
 
-	dsn := fmt.Sprint(
+	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
 	db, err := sqlx.Connect("pgx", dsn)
