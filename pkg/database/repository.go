@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"gophermart/pkg/models"
 )
@@ -11,6 +12,16 @@ func FindByLogin(db *sqlx.DB, login string) (models.User, error) {
 	if err != nil {
 		return models.User{}, err
 	}
+	return user, nil
+}
+
+func FindByUserID(db *sqlx.DB, userID uuid.UUID) (models.User, error) {
+	var user models.User
+	err := db.Get(&user, "SELECT * FROM users WHERE id = $1", userID)
+	if err != nil {
+		return models.User{}, err
+	}
+
 	return user, nil
 }
 

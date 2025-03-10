@@ -2,26 +2,23 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	user2 "gophermart/internal/service/user"
 	"gophermart/pkg/config"
 	"gophermart/pkg/database"
 	"gophermart/pkg/hash"
 	"gophermart/pkg/jwt"
-	"gophermart/pkg/models"
 	"net/http"
-	"time"
 )
 
-type RequestRegistration struct {
+type LoginRequest struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
 
-func RegisterHandler(db *sqlx.DB, cfg *config.Config) http.HandlerFunc {
+func LoginHandler(db *sqlx.DB, cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req RequestRegistration
+		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
@@ -33,26 +30,14 @@ func RegisterHandler(db *sqlx.DB, cfg *config.Config) http.HandlerFunc {
 			return
 		}
 
-		if _, err := database.FindByLogin(db, req.Login); err == nil {
-			http.Error(w, "user already exists", http.StatusConflict)
-			return
-		}
-
-		hashedPassword, err := hash.Hash(req.Password)
+		user, err := database.FindByLogin(db, req.Login)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Invalid login or password", http.StatusUnauthorized)
 			return
 		}
 
-		user := models.User{
-			ID:           uuid.New(),
-			Login:        req.Login,
-			PasswordHash: hashedPassword,
-			CreatedAt:    time.Now(),
-		}
-
-		if err := database.CreateUser(db, user); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err := hash.CheckPassword(user.PasswordHash, req.Password); err != nil {
+			http.Error(w, "Invalid login or password", http.StatusUnauthorized)
 			return
 		}
 
@@ -64,6 +49,6 @@ func RegisterHandler(db *sqlx.DB, cfg *config.Config) http.HandlerFunc {
 
 		user2.SetJWT(w, token)
 
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 	}
 }

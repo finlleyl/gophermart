@@ -23,6 +23,10 @@ func main() {
 		r.Post("/register", gzip.GzipMiddleware(
 			api.RegisterHandler(db, cfg)),
 		)
+
+		r.Post("/login", gzip.GzipMiddleware(
+			api.LoginHandler(db, cfg)),
+		)
 	})
 
 	if err := http.ListenAndServe(cfg.RunAddress, r); err != nil {

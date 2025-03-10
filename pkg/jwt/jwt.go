@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gophermart/pkg/config"
@@ -26,4 +27,23 @@ func GenerateJWT(cfg *config.Config, uid uuid.UUID) (string, error) {
 	}
 
 	return tokenString, err
+}
+
+func GetUserID(cfg *config.Config, tokenString string) (uuid.UUID, error) {
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return []byte(cfg.SecretKey), nil
+	})
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	if !token.Valid {
+		return uuid.UUID{}, fmt.Errorf("invalid token")
+	}
+
+	return claims.UserID, nil
 }
