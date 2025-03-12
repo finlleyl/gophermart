@@ -5,6 +5,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"gophermart/internal/service/luhn"
 	"gophermart/pkg/database"
+	"gophermart/pkg/logger"
 	"gophermart/pkg/mErrors"
 	"gophermart/pkg/models"
 	"io"
@@ -90,6 +91,7 @@ func LoadOrderHandler(db *sqlx.DB) http.HandlerFunc {
 			return
 		}
 
+		logger.Sugar.Infof("Order %s accepted from %s", orderNumber, userID)
 		w.WriteHeader(http.StatusAccepted)
 	}
 }
