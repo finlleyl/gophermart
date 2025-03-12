@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/go-chi/chi/v5"
 	"gophermart/internal/api"
+	"gophermart/internal/middleware"
 	"gophermart/pkg/config"
 	"gophermart/pkg/database"
 	"gophermart/pkg/gzip"
@@ -28,6 +29,13 @@ func main() {
 
 		r.Post("/login", gzip.GzipMiddleware(
 			api.LoginHandler(db, cfg)),
+		)
+
+		r.Post("/orders", gzip.GzipMiddleware(
+			middleware.CheckCookies(
+				cfg, api.LoadOrderHandler(db),
+			),
+		),
 		)
 	})
 
