@@ -48,3 +48,17 @@ func LoadOrder(db *sqlx.DB, order models.Order) error {
 	_, err := db.NamedExec("INSERT INTO orders (id, user_id, number, status, accrual, uploaded_at) VALUES (:id, :user_id, :number, :status, :accrual, :uploaded_at)", order)
 	return err
 }
+
+func GetOrders(db *sqlx.DB, userID uuid.UUID) ([]models.Order, error) {
+	var orders []models.Order
+	query := `
+		SELECT number, status, accrual, uploaded_at
+		FROM orders
+		WHERE user_id = $1
+		ORDER BY uploaded_at ASC
+	`
+	if err := db.Select(&orders, query, userID); err != nil {
+		return nil, err
+	}
+	return orders, nil
+}

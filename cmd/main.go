@@ -37,6 +37,13 @@ func main() {
 			),
 		),
 		)
+
+		r.Get("/orders", gzip.GzipMiddleware(
+			middleware.CheckCookies(
+				cfg, api.GetOrdersHandler(db),
+			),
+		),
+		)
 	})
 
 	if err := http.ListenAndServe(cfg.RunAddress, r); err != nil {
