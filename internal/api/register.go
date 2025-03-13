@@ -52,7 +52,13 @@ func RegisterHandler(db *sqlx.DB, cfg *config.Config) http.HandlerFunc {
 			CreatedAt:    time.Now(),
 		}
 
-		if err := database.CreateUser(db, user); err != nil {
+		loyalty := models.LoyaltyAccount{
+			UserID:           user.ID,
+			CurrentBalance:   0,
+			WithdrawnBalance: 0,
+		}
+
+		if err := database.CreateUser(db, user, loyalty); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

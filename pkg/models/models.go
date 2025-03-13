@@ -20,3 +20,9 @@ type Order struct {
 	Accrual    float64   `db:"accrual" json:"accrual"`
 	UploadedAt time.Time `db:"uploaded_at" json:"uploaded_at"`
 }
+
+type LoyaltyAccount struct {
+	UserID           uuid.UUID `db:"user_id" json:"user_id"`
+	CurrentBalance   float64   `db:"current_balance" json:"current_balance"`
+	WithdrawnBalance float64   `db:"withdrawn_balance" json:"withdrawn_balance"`
+}

@@ -18,9 +18,33 @@ func FindByLogin(db *sqlx.DB, login string) (models.User, error) {
 	return user, nil
 }
 
-func CreateUser(db *sqlx.DB, user models.User) error {
-	_, err := db.NamedExec("INSERT INTO users (id, login, password_hash, created_at) VALUES (:id, :login, :password_hash, :created_at)", user)
-	return err
+func CreateUser(db *sqlx.DB, user models.User, loyalty models.LoyaltyAccount) error {
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NamedExec(
+		`INSERT INTO users (id, login, password_hash, created_at)
+		 VALUES (:id, :login, :password_hash, :created_at)`,
+		user,
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.NamedExec(
+		`INSERT INTO loyalty_accounts (user_id, current_balance, withdrawn_balance)
+		 VALUES (:user_id, :current_balance, :withdrawn_balance)`,
+		loyalty,
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func CheckOrder(db *sqlx.DB, userID uuid.UUID, orderNumber string) error {
@@ -45,8 +69,36 @@ func CheckOrder(db *sqlx.DB, userID uuid.UUID, orderNumber string) error {
 }
 
 func LoadOrder(db *sqlx.DB, order models.Order) error {
-	_, err := db.NamedExec("INSERT INTO orders (id, user_id, number, status, accrual, uploaded_at) VALUES (:id, :user_id, :number, :status, :accrual, :uploaded_at)", order)
-	return err
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NamedExec(
+		`INSERT INTO orders (id, user_id, number, status, accrual, uploaded_at)
+         VALUES (:id, :user_id, :number, :status, :accrual, :uploaded_at)`,
+		order,
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.NamedExec(
+		`UPDATE loyalty_accounts
+         SET current_balance = current_balance + :accrual
+         WHERE user_id = :user_id`,
+		map[string]interface{}{
+			"accrual": order.Accrual,
+			"user_id": order.UserID,
+		},
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func GetOrders(db *sqlx.DB, userID uuid.UUID) ([]models.Order, error) {
@@ -61,4 +113,15 @@ func GetOrders(db *sqlx.DB, userID uuid.UUID) ([]models.Order, error) {
 		return nil, err
 	}
 	return orders, nil
+}
+
+func GetBalance(db *sqlx.DB, userID uuid.UUID) (models.LoyaltyAccount, error) {
+	var loyalty models.LoyaltyAccount
+
+	query := `SELECT current_balance, withdrawn_balance FROM loyalty_accounts WHERE user_id = $1`
+	if err := db.Get(&loyalty, query, userID); err != nil {
+		return loyalty, err
+	}
+
+	return loyalty, nil
 }

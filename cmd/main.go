@@ -44,6 +44,13 @@ func main() {
 			),
 		),
 		)
+
+		r.Get("/balance", gzip.GzipMiddleware(
+			middleware.CheckCookies(
+				cfg, api.GetBalanceHandler(db),
+			),
+		),
+		)
 	})
 
 	if err := http.ListenAndServe(cfg.RunAddress, r); err != nil {
