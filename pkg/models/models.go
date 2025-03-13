@@ -26,3 +26,11 @@ type LoyaltyAccount struct {
 	CurrentBalance   float64   `db:"current_balance" json:"current_balance"`
 	WithdrawnBalance float64   `db:"withdrawn_balance" json:"withdrawn_balance"`
 }
+
+type Withdrawal struct {
+	ID          string    `json:"id"`
+	UserID      uuid.UUID `json:"user_id"`
+	OrderNumber string    `json:"order_number"`
+	Sum         float64   `json:"sum"`
+	WithdrawnAt time.Time `json:"withdrawn_at"`
+}

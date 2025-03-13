@@ -125,3 +125,61 @@ func GetBalance(db *sqlx.DB, userID uuid.UUID) (models.LoyaltyAccount, error) {
 
 	return loyalty, nil
 }
+
+func Withdraw(db *sqlx.DB, orderNumber string, sum float64, userID uuid.UUID) error {
+	var order models.Order
+	query := `SELECT * FROM orders WHERE number = $1 AND user_id = $2`
+	if err := db.Get(&order, query, orderNumber, userID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return mErrors.ErrOrderNotFound
+		}
+		return err
+	}
+
+	var loyalty models.LoyaltyAccount
+	if err := db.Get(&loyalty, `SELECT * FROM loyalty_accounts WHERE user_id = $1`, userID); err != nil {
+		return err
+	}
+
+	if loyalty.CurrentBalance < sum {
+		return mErrors.ErrNotEnoughMoney
+	}
+
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.NamedExec(
+		`UPDATE loyalty_accounts
+		 SET current_balance = current_balance - :sum, withdrawn_balance = withdrawn_balance + :sum
+		 WHERE user_id = :user_id`,
+		map[string]interface{}{
+			"sum":     sum,
+			"user_id": userID,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NamedExec(
+		`INSERT INTO withdrawals (user_id, order_number, sum)
+		 VALUES (:user_id, :order_number, :sum)`,
+		map[string]interface{}{
+			"user_id":      userID,
+			"order_number": orderNumber,
+			"sum":          sum,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
