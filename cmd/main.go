@@ -51,6 +51,20 @@ func main() {
 			),
 		),
 		)
+
+		r.Post("/balance/withdraw", gzip.GzipMiddleware(
+			middleware.CheckCookies(
+				cfg, api.WithdrawHandler(db),
+			),
+		),
+		)
+
+		r.Get("/withdrawals", gzip.GzipMiddleware(
+			middleware.CheckCookies(
+				cfg, api.GetWithdrawalsHandler(db),
+			),
+		),
+		)
 	})
 
 	if err := http.ListenAndServe(cfg.RunAddress, r); err != nil {

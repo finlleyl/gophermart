@@ -183,3 +183,17 @@ func Withdraw(db *sqlx.DB, orderNumber string, sum float64, userID uuid.UUID) er
 
 	return nil
 }
+
+func GetWithdrawals(db *sqlx.DB, userID uuid.UUID) ([]models.Withdrawal, error) {
+	var withdrawals []models.Withdrawal
+	query := `
+		SELECT order_number, sum, withdrawn_at
+		FROM withdrawals
+		WHERE user_id = $1
+		ORDER BY withdrawn_at ASC
+	`
+	if err := db.Select(&withdrawals, query, userID); err != nil {
+		return nil, err
+	}
+	return withdrawals, nil
+}

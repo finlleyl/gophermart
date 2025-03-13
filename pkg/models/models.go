@@ -28,9 +28,9 @@ type LoyaltyAccount struct {
 }
 
 type Withdrawal struct {
-	ID          string    `json:"id"`
-	UserID      uuid.UUID `json:"user_id"`
-	OrderNumber string    `json:"order_number"`
-	Sum         float64   `json:"sum"`
-	WithdrawnAt time.Time `json:"withdrawn_at"`
+	ID          string    `db:"id" json:"id"`
+	UserID      uuid.UUID `db:"user_id" json:"user_id"`
+	OrderNumber string    `db:"order_number" json:"order_number"`
+	Sum         float64   `db:"sum" json:"sum"`
+	WithdrawnAt time.Time `db:"withdrawn_at" json:"withdrawn_at"`
 }
