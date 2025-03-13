@@ -22,49 +22,57 @@ func main() {
 	}
 	defer db.Close()
 
-	r.Route("/api/user", func(r chi.Router) {
-		r.Post("/register", gzip.GzipMiddleware(
-			api.RegisterHandler(db, cfg)),
-		)
+	r.Route("/api", func(r chi.Router) {
+		r.Route("/user", func(r chi.Router) {
+			r.Post("/register", gzip.GzipMiddleware(
+				api.RegisterHandler(db, cfg)),
+			)
 
-		r.Post("/login", gzip.GzipMiddleware(
-			api.LoginHandler(db, cfg)),
-		)
+			r.Post("/login", gzip.GzipMiddleware(
+				api.LoginHandler(db, cfg)),
+			)
 
-		r.Post("/orders", gzip.GzipMiddleware(
-			middleware.CheckCookies(
-				cfg, api.LoadOrderHandler(db),
+			r.Post("/orders", gzip.GzipMiddleware(
+				middleware.CheckCookies(
+					cfg, api.LoadOrderHandler(db),
+				),
 			),
-		),
-		)
+			)
 
-		r.Get("/orders", gzip.GzipMiddleware(
-			middleware.CheckCookies(
-				cfg, api.GetOrdersHandler(db),
+			r.Get("/orders", gzip.GzipMiddleware(
+				middleware.CheckCookies(
+					cfg, api.GetOrdersHandler(db),
+				),
 			),
-		),
-		)
+			)
 
-		r.Get("/balance", gzip.GzipMiddleware(
-			middleware.CheckCookies(
-				cfg, api.GetBalanceHandler(db),
+			r.Get("/balance", gzip.GzipMiddleware(
+				middleware.CheckCookies(
+					cfg, api.GetBalanceHandler(db),
+				),
 			),
-		),
-		)
+			)
 
-		r.Post("/balance/withdraw", gzip.GzipMiddleware(
-			middleware.CheckCookies(
-				cfg, api.WithdrawHandler(db),
+			r.Post("/balance/withdraw", gzip.GzipMiddleware(
+				middleware.CheckCookies(
+					cfg, api.WithdrawHandler(db),
+				),
 			),
-		),
-		)
+			)
 
-		r.Get("/withdrawals", gzip.GzipMiddleware(
-			middleware.CheckCookies(
-				cfg, api.GetWithdrawalsHandler(db),
+			r.Get("/withdrawals", gzip.GzipMiddleware(
+				middleware.CheckCookies(
+					cfg, api.GetWithdrawalsHandler(db),
+				),
 			),
-		),
-		)
+			)
+		})
+
+		r.Route("/orders", func(r chi.Router) {
+			r.Get("/{number}", gzip.GzipMiddleware(
+				api.GetAccrualHandler(db),
+			))
+		})
 	})
 
 	if err := http.ListenAndServe(cfg.RunAddress, r); err != nil {

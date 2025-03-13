@@ -197,3 +197,19 @@ func GetWithdrawals(db *sqlx.DB, userID uuid.UUID) ([]models.Withdrawal, error) 
 	}
 	return withdrawals, nil
 }
+
+func GetAccrual(db *sqlx.DB, orderNumber string) (models.Order, error) {
+	var order models.Order
+	query := `
+SELECT number, status, accrual
+FROM orders
+WHERE number = $1
+`
+	if err := db.Get(&order, query, orderNumber); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.Order{}, mErrors.ErrOrderNotFound
+		}
+		return models.Order{}, err
+	}
+	return order, nil
+}
